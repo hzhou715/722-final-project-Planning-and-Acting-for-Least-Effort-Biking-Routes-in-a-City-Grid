@@ -1,4 +1,3 @@
-# 722-final-project-Planning-and-Acting-for-Least-Effort-Biking-Routes-in-a-City-Grid
 # Type-1: Planning and Acting for Least-Effort Biking Routes in a City Grid
 
 **Course:** CMSC 722: AI Planning<br>
@@ -16,15 +15,16 @@ David Chan
 
 ## 1. Project overview
 
-This project implements least-effort path planning in a SimpleGrid grid environment, using a classical planner (such as Fast Downward). It also compares two acting strategies (Run-Lookahead and Run-Lazy-Lookahead). Each grid cell encodes terrain difficulty; moving into a cell adds its cost to the plan. The planner minimizes total cost to reach the goal, and an acting loop executes the plan.
+This project explores classical PDDL planning and acting strategies in a dynamic grid environment, simulating a cyclist navigating an 8×8 city grid with varying terrain difficulty. The goal is to reach a destination while minimizing physical effort (terrain cost), even when encountering unexpected blocked cells.
 
-We will use an existing grid simulator (i.e., SimpleGrid) rather than building one from scratch. A small translator will export the simulator state to PDDL (objects, adjacency, per-cell costs) and import the resulting plan back into the simulator. This keeps modeling simple and leverages classical planners’ strength at path search. 
+This project investigates replanning strategies for cost-optimal grid navigation in dynamic environments with terrain costs and blocked obstacles.
+
 
 ### 1.1 Research question
-How does terrain difficulty, represented as action cost, affect planning and acting performance?
+If there is a newly blocked cell in the city grid, how do different strategies react to changing conditions?
 
 ### 1.2 Comparison
-We compare Run-Lookahead and Run-Lazy-Lookahead on planning time, total effort, plan length, and number of replans. We expect Run-Lookahead to replan more and achieve lower total cost, while Run-Lazy-Lookahead plans faster but may yield higher cost.
+We compare **Run-Lazy-Lookahead** (reactive replanning) and **Run-Full-Lookahead** (proactive replanning) against baseline strategies including greedy heuristics, random walk, and no replanning. We expect Run-Lookahead to replan more and achieve lower total cost, while Run-Lazy-Lookahead plans faster but may yield higher cost.
 
 ---
 
@@ -32,48 +32,110 @@ We compare Run-Lookahead and Run-Lazy-Lookahead on planning time, total effort, 
 
 ### 2.1 System Overview
 
-- Planner: a classical PDDL planner, SimpleGrid (i.e., an existing grid simulator)
-- Acting: Run-Lookahead vs Run-Lazy-Lookahead
+- Planner: a classical PDDL planner, PDDL: Fast Downward (A* search with LM-Cut heuristic)
 - Metrics: planning time, total effort, plan length, replans
+## Experimental Setup
+
+### 2.2 Environment Configuration
+- **Grid Size**: 8×8 (64 cells), SimpleGrid
+- **Cell Naming**: `cXXYY` (e.g., `c0000` = position (0,0))
+- **Start Position**: (0,0) - top-left corner
+- **Goal Position**: (7,7) - bottom-right corner
+- **Terrain Costs**: Randomly generated [1,5] with seed 42
+- **Blocked Cell**: (4,3) - positioned on initial optimal path
+- **Adjacency**: 4-connected (no diagonal moves)
+
+### 2.3 PDDL Domain Details
+
+**Domain**: `grid-costs`
+- **Types**: `cell`
+- **Predicates**: `(at ?c)`, `(adj ?c1 ?c2)`
+- **Functions**: `(move-cost ?c)`, `(total-cost)`
+- **Action**: `move(?from ?to)` - cost equals destination terrain cost
+- **Metric**: Minimize `total-cost`
+
+### 2.4 Implemented Strategies
+
+- **Run-Full-Lookahead** — Replan before every move
+- **Run-Lazy-Lookahead** — Replan only when blocked
+- **No-Replanning** — Execute initial plan rigidly
+- **Greedy-Heuristic** — Move toward goal greedily (no planning)
+- **Random-Walk** — Move randomly (for baseline)
+
   
 ## 3. Framework
-## Code Overview
+### Code Overview
 
 | File                      | Purpose                                                                 |
 |---------------------------|-------------------------------------------------------------------------|
-| `simple_grid_wrapper.py` | Wraps the SimpleGrid environment to expose agent state, goal, terrain, etc. Also supports fixed start/goal setup. |
-| `pddl_translator.py`     | Converts the current grid world state into a PDDL problem file. Uses terrain as action costs. |
+| `simple_grid_wrapper_fixed.py` | Wraps the SimpleGrid environment to expose agent state, goal, terrain, etc. Also supports fixed start/goal setup. |
+| `pddl_translator_fixed.py`     | Converts the current grid world state into a PDDL problem file. Uses terrain as action costs. |
 | `grid_costs_domain.pddl` | PDDL domain file defining actions, predicates, and cost structure for the planner. |
 | `grid_problem.pddl`      | Auto-generated PDDL problem file for a specific environment configuration. |
-| `acting_strategies.py`   | Runs the plan using two strategies: Run-Lookahead and Run-Lazy-Lookahead. Logs cost and step metrics. |
+| `baseline_comparison.py` | Runs the plan using five strategies metrics. |
 | `sas_plan`               | Output plan file generated by Fast Downward after solving the PDDL problem. |
 | `downward/`              | Folder containing the Fast Downward planner and binaries.                |
 | `README.md`              | This file. Describes the project structure and usage.                    |
+| `results_five_strategies.txt`              | Experimental results with one blocked cell               |
+| `results_no_blocked_cells.txt`              | Results with no blocked cells                    |
 
+### Required Software
+- Python 3.8+
+- [Fast Downward Planner](https://www.fast-downward.org/)
+
+### Python Packages
+```bash
+pip install gymnasium numpy gym-simplegrid
+```
+
+Install gym-simplegrid:
+```bash
+pip install gym-simplegrid
+```
+### 1). Generate Initial PDDL Problem
+
+Generate PDDL problem from starting position (0,0):
+```bash
+python pddl_translator_fixed.py 0 0
+```
+
+This creates `grid_problem.pddl` with:
+- 8×8 grid (64 cells)
+- Start: (0,0), Goal: (7,7)
+- Terrain costs: 1-5 (generated with seed 42)
+
+### 2). Run Fast Downward Planner
+
+Generate optimal plan using A* with LM-Cut heuristic:
+```bash
+./downward/fast-downward_fixed.py grid_costs_domain.pddl grid_problem.pddl --search "astar(lmcut())"
+```
+
+This creates `sas_plan` containing the optimal action sequence.
+
+### 3). Execute Strategy Comparison
+
+Run all five strategies and compare performance:
+```bash
+python baseline_comparison.py
+```
+**Output**: Comparison table showing success rate, steps, total cost, and replanning count for each strategy.
 
 ## 4. Results Summary
 
-This project compares two acting strategies using a cost-aware 8×8 grid environment with terrain difficulty encoded as action cost:
+**Key Finding**: Run-Lazy-Lookahead achieves near-optimal performance (cost 39), with 93% less computational overhead (1 vs 14 replanning operations), compared to Run-Full-Lookahead (cost 35).
 
-- **Run-Lookahead**: Replans before every action.
-- **Run-Lazy-Lookahead**: Replans only when the next action fails.
+| Strategy              | Success | Cost | Steps | Replans |
+|-----------------------|---------|------|--------|----------|
+| No-Replanning         | ❌      | 16*  | 6*     | 0        |
+| Random-Walk           | ❌      | 345* | 100*   | 0        |
+| Greedy-Heuristic      | ✅      | 43   | 14     | 0        |
+| Run-Lazy-Lookahead    | ✅      | 39   | 14     | 1        |
+| **Run-Full-Lookahead**| ✅      | 35   | 14     | 14       |
 
-### Fixed Map Test (from (0,0) to (7,7))
+\* Failed to reach the goal.
 
-| Strategy              | Total Steps | Total Cost | Replans |
-|-----------------------|-------------|------------|---------|
-| Run-Lookahead         | 14          | 34         | 0       |
-| Run-Lazy-Lookahead    | 14          | 34         | 0       |
 
-> Both strategies followed the same path under static terrain (no blocked cells), with identical cost and step count.
-
----
-
-## 5. Future Work
-
-- Add blocked cells dynamically to simulate unforeseen obstacles.
-- Evaluate replanning behavior and recovery cost under disruptions.
-- Run batch sweeps across terrain seeds and map variants.
 
 
 
