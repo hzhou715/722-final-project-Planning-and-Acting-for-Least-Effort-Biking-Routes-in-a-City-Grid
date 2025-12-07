@@ -126,11 +126,11 @@ python baseline_comparison.py
 
 | Strategy              | Success | Cost | Steps | Replans |
 |-----------------------|---------|------|--------|----------|
-| No-Replanning         | ❌      | 16*  | 6*     | 0        |
-| Random-Walk           | ❌      | 345* | 100*   | 0        |
-| Greedy-Heuristic      | ✅      | 43   | 14     | 0        |
-| Run-Lazy-Lookahead    | ✅      | 39   | 14     | 1        |
-| **Run-Lookahead**| ✅      | 35   | 14     | 14       |
+| No-Replanning         | No      | 16*  | 6*     | 0        |
+| Random-Walk           | No      | 345* | 100*   | 0        |
+| Greedy-Heuristic      | Yes      | 43   | 14     | 0        |
+| Run-Lazy-Lookahead    | Yes     | 39   | 14     | 1        |
+| **Run-Lookahead**| Yes      | 35   | 14     | 14       |
 
 \* Failed to reach the goal.
 
