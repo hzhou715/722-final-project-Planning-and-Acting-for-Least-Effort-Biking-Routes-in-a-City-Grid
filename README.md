@@ -24,7 +24,7 @@ This project investigates replanning strategies for cost-optimal grid navigation
 If there is a newly blocked cell in the city grid, how do different strategies react to changing conditions?
 
 ### 1.2 Comparison
-We compare **Run-Lazy-Lookahead** (reactive replanning) and **Run-Full-Lookahead** (proactive replanning) against baseline strategies including greedy heuristics, random walk, and no replanning. We expect Run-Lookahead to replan more and achieve lower total cost, while Run-Lazy-Lookahead plans faster but may yield higher cost.
+We compare **Run-Lazy-Lookahead** (reactive replanning) and **Run-Lookahead** (proactive replanning) against baseline strategies including greedy heuristics, random walk, and no replanning. We expect Run-Lookahead to replan more and achieve lower total cost, while Run-Lazy-Lookahead plans faster but may yield higher cost.
 
 ---
 
@@ -34,7 +34,6 @@ We compare **Run-Lazy-Lookahead** (reactive replanning) and **Run-Full-Lookahead
 
 - Planner: a classical PDDL planner, PDDL: Fast Downward (A* search with LM-Cut heuristic)
 - Metrics: planning time, total effort, plan length, replans
-## Experimental Setup
 
 ### 2.2 Environment Configuration
 - **Grid Size**: 8×8 (64 cells), SimpleGrid
@@ -56,7 +55,7 @@ We compare **Run-Lazy-Lookahead** (reactive replanning) and **Run-Full-Lookahead
 
 ### 2.4 Implemented Strategies
 
-- **Run-Full-Lookahead** — Replan before every move
+- **Run-Lookahead** — Replan before every move
 - **Run-Lazy-Lookahead** — Replan only when blocked
 - **No-Replanning** — Execute initial plan rigidly
 - **Greedy-Heuristic** — Move toward goal greedily (no planning)
@@ -123,7 +122,7 @@ python baseline_comparison.py
 
 ## 4. Results Summary
 
-**Key Finding**: Run-Lazy-Lookahead achieves near-optimal performance (cost 39), with 93% less computational overhead (1 vs 14 replanning operations), compared to Run-Full-Lookahead (cost 35).
+**Key Finding**: Run-Lazy-Lookahead achieves near-optimal performance (cost 39), with 93% less computational overhead (1 vs 14 replanning operations), compared to Run-Lookahead (cost 35).
 
 | Strategy              | Success | Cost | Steps | Replans |
 |-----------------------|---------|------|--------|----------|
@@ -131,7 +130,7 @@ python baseline_comparison.py
 | Random-Walk           | ❌      | 345* | 100*   | 0        |
 | Greedy-Heuristic      | ✅      | 43   | 14     | 0        |
 | Run-Lazy-Lookahead    | ✅      | 39   | 14     | 1        |
-| **Run-Full-Lookahead**| ✅      | 35   | 14     | 14       |
+| **Run-Lookahead**| ✅      | 35   | 14     | 14       |
 
 \* Failed to reach the goal.
 
